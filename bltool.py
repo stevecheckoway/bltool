@@ -15,6 +15,8 @@ CMD_DELETE_FILE = 0x15
 CMD_NEW_FILE = 0x18
 CMD_WRITE_FILE = 0x19
 
+CMD_NEXT_ANIMATION = 0x80
+
 FILETYPE_ANIMATION = 0x12
 
 
@@ -93,6 +95,8 @@ def new_file(ser, data):
 def reload_animations(ser):
     return command(ser, CMD_RELOAD_ANIMATIONS) is not None
 
+def next_animation(ser):
+    return command(ser, CMD_NEXT_ANIMATION)
 
 def get_serial_port():
     for port in serial.tools.list_ports.grep(r'.*usbmodem.*'):
@@ -124,6 +128,7 @@ def arg_parser():
         'file', type=argparse.FileType('rb'), help='File to add')
 
     subparsers.add_parser('reset', help='Reset the blinkytile')
+    subparsers.add_parser('next', help='Show the next animation')
 
     return parser
 
@@ -161,6 +166,11 @@ def main():
             if not reload_animations(ser):
                 print("Failed to reset", file=sys.stderr)
                 sys.exit(1)
+        elif args.command == 'next':
+            if not next_animation(ser):
+                print("Failed to move to the next animation", file=sys.stderr)
+                sys.exit(1)
+
         else:
             print(f"Unknown command: {args.command}")
             sys.exit(1)
