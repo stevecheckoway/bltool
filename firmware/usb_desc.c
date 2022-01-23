@@ -371,9 +371,10 @@ void usb_init_serialnumber(void)
     }
 
     // Output letters
+    uint16_t *output = usb_string_serial_number.wString;
     for (i = 0; i < 16; ++i) {
         hash = (hash ^ serial.bytes[i]) * 0x1000193;
-        usb_string_serial_number.wString[i] = 'A' + (hash % 26);
+        output[i] = 'A' + (hash % 26);
     }
 }
 

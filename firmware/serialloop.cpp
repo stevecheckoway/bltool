@@ -104,19 +104,21 @@ void dataLoop() {
 
 
 
-bool commandProgramAddress(uint8_t* buffer);
-bool commandReloadAnimations(uint8_t* buffer);
-bool commandFreeSpace(uint8_t* buffer);
-bool commandLargestFile(uint8_t* buffer);
-bool commandFileNew(uint8_t* buffer);
-bool commandFileWritePage(uint8_t* buffer);
-bool commandFileRead(uint8_t* buffer);
-bool commandFileCount(uint8_t* buffer);
-bool commandFirstFreeSector(uint8_t* buffer);
-bool commandFileGetType(uint8_t* buffer);
-bool commandFileDelete(uint8_t* buffer);
-bool commandFlashErase(uint8_t* buffer);
-bool commandFlashRead(uint8_t* buffer);
+static bool commandProgramAddress(uint8_t* buffer);
+static bool commandReloadAnimations(uint8_t* buffer);
+static bool commandFreeSpace(uint8_t* buffer);
+static bool commandLargestFile(uint8_t* buffer);
+static bool commandFileNew(uint8_t* buffer);
+static bool commandFileWritePage(uint8_t* buffer);
+static bool commandFileRead(uint8_t* buffer);
+static bool commandFileCount(uint8_t* buffer);
+static bool commandFirstFreeSector(uint8_t* buffer);
+static bool commandFileGetType(uint8_t* buffer);
+static bool commandFileDelete(uint8_t* buffer);
+static bool commandFlashErase(uint8_t* buffer);
+static bool commandFlashRead(uint8_t* buffer);
+
+static bool commandNextAnimation(uint8_t* buffer);
 
 struct Command {
     uint8_t name;   // Command identifier
@@ -138,6 +140,8 @@ Command commands[] = {
     {0x1A,  10, commandFileRead},
     {0x20,   3, commandFlashErase},         // Low-level flash routines
     {0x21,   9, commandFlashRead},
+    // New commands!
+    {0x80,   1, commandNextAnimation},
     {0xFF,   0, NULL}
 };
 
@@ -360,5 +364,12 @@ bool commandFileRead(uint8_t* buffer) {
         return false;
     
     buffer[0] = read - 1;
+    return true;
+}
+
+bool commandNextAnimation(uint8_t* buffer) {
+    extern void nextAnimation();
+    nextAnimation();
+    buffer[0] = 0;
     return true;
 }

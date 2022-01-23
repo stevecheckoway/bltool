@@ -63,6 +63,12 @@ extern uint32_t boot_token;
 
 // Token to signal that the animation loop should be restarted
 volatile bool reloadAnimations;
+static volatile bool streaming_mode;
+static volatile int animation;          // Flash animation to show
+static volatile int frame;              // current frame to display
+static volatile uint32_t nextTime;      // Time to display next frame
+
+
 
 static void dfu_reboot()
 {
@@ -103,6 +109,13 @@ void setupWatchdog() {
     WDOG_TOVALL = (watchdog_timeout)       & 0xFFFF;
 }
 
+void nextAnimation() {
+    streaming_mode = false;
+    animation = (animation + 1) % animations.getCount();
+    frame = 0;
+    nextTime = 0;
+}
+
 extern "C" int main()
 {
     setupWatchdog();
@@ -131,12 +144,6 @@ extern "C" int main()
         #define BRIGHTNESS_COUNT 5
         static int brightnessLevels[BRIGHTNESS_COUNT] = {30,60,100,150,255};
         static int brightnessStep = BRIGHTNESS_COUNT-1;
-
-        static bool streaming_mode;
-
-        static int animation;          // Flash animation to show
-        static int frame;              // current frame to display
-        static uint32_t nextTime;           // Time to display next frame
 
         dmxSetBrightness(brightnessLevels[brightnessStep]);
 
@@ -203,8 +210,7 @@ extern "C" int main()
             uint8_t button = userButtons.getPressed();
     
             if(button == BUTTON_A) {
-                animation = (animation + 1)%animations.getCount();
-                frame = 0;
+                nextAnimation();
             }
             else if(button == BUTTON_B) {
                 brightnessStep = (brightnessStep + 1) % BRIGHTNESS_COUNT;
