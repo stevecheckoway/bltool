@@ -11,7 +11,7 @@ OBJDUMP = arm-none-eabi-objdump
 SIZE = arm-none-eabi-size
 
 # Bootloader to include in whole-chip .hex image
-FCBOOT_IMAGE = ../bin/lightbuddy-boot-v100.hex
+FCBOOT_IMAGE = lightbuddy-boot-v100.hex
 
 # Configuration options
 OPTIONS += -DF_CPU=48000000 -D__MK20DN64__ -DUSB_SERIAL_FC_DFU
@@ -43,22 +43,20 @@ CPP_FILES = \
 	blinkytile.cpp \
 	hardwaredmx.cpp \
 	addressprogrammer.cpp \
-	patterns.cpp \
 	serialloop.cpp \
 	buttons.cpp \
-        animation.cpp \
+    animation.cpp \
 	fc_usb.cpp
-#	dmx.cpp \
 
 # Headers
 INCLUDES = -I.
 
 # CPPFLAGS = compiler options for C and C++
 CPPFLAGS = -Wall -Wno-sign-compare -Wno-strict-aliasing -g -Os -mcpu=cortex-m4 \
-	-mthumb -MMD -Werror $(OPTIONS) $(INCLUDES)
+	-mthumb -MMD -Werror $(OPTIONS) $(INCLUDES) -ffreestanding
 
 # compiler options for C++ only
-CXXFLAGS = -std=gnu++0x -felide-constructors -fno-exceptions -fno-rtti
+CXXFLAGS = -std=gnu++0x -fno-exceptions -fno-rtti -fno-threadsafe-statics
 
 # compiler options for C only
 CFLAGS =
@@ -70,14 +68,14 @@ LDSCRIPT = fcb-app.ld
 LDFLAGS = -Os -Wl,--gc-sections -mcpu=cortex-m4 -mthumb -T$(LDSCRIPT)
 
 # additional libraries to link
-LIBS = -lgcc -lc -lm
+LIBS = #-lgcc #-lc -lm
 
 OBJS := $(C_FILES:.c=.o) $(CPP_FILES:.cpp=.o)
 
 all: $(TARGET).dfu $(TARGET).hex
 
 $(TARGET).elf: $(OBJS) $(LDSCRIPT)
-	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+	$(CXX) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
 
 %.dfu: %.elf
 	$(SIZE) $<

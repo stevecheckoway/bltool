@@ -30,9 +30,23 @@
 
 // Max. number of animations that can be read from the flash (arbitrary)
 #define MAX_ANIMATIONS_COUNT 100
+#define MAX_SCRIPTS_COUNT 10
 
 class Animation {
   public:
+    ~Animation() {}
+
+    // Retrieve the animation data for the given frame
+    // Reads LED_COUT*BYTES_PER_PIXEL of data.
+    // @param frame Animation frame
+    // @param buffer Buffer to write the data to
+    virtual void getFrame(uint32_t frame, uint8_t* buffer) = 0;
+    virtual uint32_t getFrameCount() const = 0;
+    virtual uint32_t getSpeed() const = 0; 
+};
+
+class ImageAnimation : public Animation {
+  private:
     NoFatStorage* storage;       // Storage container to read from
     uint32_t fileNumber;         // File number containing this animation
     uint32_t ledCount;           // Number of LEDs controlled by this animation
@@ -44,24 +58,61 @@ class Animation {
     // @param fileNumber File to read from
     void init(NoFatStorage& storage_, uint32_t fileNumber_);
 
-    // Retrieve the animation data for the given frame
-    // Reads LED_COUT*BYTES_PER_PIXEL of data.
-    // @param frame Animation frame
-    // @param buffer Buffer to write the data to
-    void getFrame(uint32_t frame, uint8_t* buffer);
+  public:
+    ~ImageAnimation() {}
+    void getFrame(uint32_t frame, uint8_t* buffer) override;
+    inline uint32_t getFrameCount() const override { return frameCount; }
+    inline uint32_t getSpeed() const override { return speed; }
+
+    friend class Animations;
 };
 
+class ScriptAnimation : public Animation {
+  private:
+    NoFatStorage *storage;
+    uint32_t fileNumber;
+    uint32_t scriptSize;
+    uint32_t scriptOffset;
+    uint32_t remainingLoops;
+    Animation *currentAnimation;
+
+    void init(NoFatStorage &storage, uint32_t fileNumber);
+    void loadNextAnimation();
+  public:
+    ~ScriptAnimation() {}
+    void getFrame(uint32_t frame, uint8_t *buffer) override;
+    uint32_t getFrameCount() const override {
+        return currentAnimation ? currentAnimation->getFrameCount() : 0;
+    }
+    uint32_t getSpeed() const override {
+        return currentAnimation ? currentAnimation->getSpeed() : 100;
+    }
+
+    friend class Animations;
+};
+
+class DefaultAnimation : public Animation {
+public:
+    uint32_t getFrameCount() const override;
+    uint32_t getSpeed() const override;
+    void getFrame(uint32_t frame, uint8_t *buffer) override;
+};
 
 class Animations {
   private:
     NoFatStorage* storage;       // Storage container to read from
 
-    Animation animations[MAX_ANIMATIONS_COUNT];	// Static table of aniimations
+    ImageAnimation animations[MAX_ANIMATIONS_COUNT];	// Static table of animations
+    ScriptAnimation scripts[MAX_SCRIPTS_COUNT];
+    DefaultAnimation default_animation;
     uint32_t animationCount;    // Number of animations in this class
+    uint32_t scriptCount;
 
     bool initialized;           // True if initialized correctly
 
   public:
+    static Animations gAnimations;
+  
     // Initialize the animations table
     // @param storage_ Storage container to read from
     void begin(NoFatStorage& storage_);
@@ -75,6 +126,8 @@ class Animations {
 
     // Get the requested animation
     Animation* getAnimation(uint32_t animation);
+
+    Animation* getImageAnimation(uint32_t animation);
 };
 
 #endif

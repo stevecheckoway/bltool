@@ -38,7 +38,6 @@
 #include "nofatstorage.h"
 #include "dmx.h"
 #include "addressprogrammer.h"
-#include "patterns.h"
 #include "serialloop.h"
 #include "buttons.h"
 
@@ -51,9 +50,6 @@ FlashSPI flash;
 
 // Flash storage class, works on top of the base flash chip
 NoFatStorage flashStorage;
-
-// Animations class
-Animations animations;
 
 // Button inputs
 Buttons userButtons;
@@ -111,7 +107,7 @@ void setupWatchdog() {
 
 void nextAnimation() {
     streaming_mode = false;
-    animation = (animation + 1) % animations.getCount();
+    animation = (animation + 1) % Animations::gAnimations.getCount();
     frame = 0;
     nextTime = 0;
 }
@@ -150,7 +146,7 @@ extern "C" int main()
         if(reloadAnimations) {
             reloadAnimations = false;
             flashStorage.begin(flash);
-            animations.begin(flashStorage);
+            Animations::gAnimations.begin(flashStorage);
 
             streaming_mode = false;
             animation = 0;
@@ -159,36 +155,30 @@ extern "C" int main()
         }
 
         if(!streaming_mode) {
-            // If the flash wasn't initialized, show a default flashing pattern
-            if(animations.getCount() == 0) {
-                count_up_loop();
-                dmxShow();
-            }
-            else {
-
-                // Flash-based
-                if(millis() > nextTime) {
-                    animations.getAnimation(animation)->getFrame(frame, dmxGetPixels());
-                    frame++;
-                    if(frame >= animations.getAnimation(animation)->frameCount) {
-                        frame = 0;
-                    }
-    
-                    nextTime += animations.getAnimation(animation)->speed;
-    
-                    // If we've gotten too far ahead of ourselves, reset the counter
-                    if(millis() > nextTime) {
-                        nextTime = millis() + animations.getAnimation(animation)->speed;
-                    }
-    
-                    dmxShow();
+            // Flash-based
+            if(millis() > nextTime) {
+                Animation *ani = Animations::gAnimations.getAnimation(animation);
+                ani->getFrame(frame, dmxGetPixels());
+                uint32_t speed = ani->getSpeed();
+                frame++;
+                if(frame >= ani->getFrameCount()) {
+                    frame = 0;
                 }
+
+                nextTime += speed;
+
+                // If we've gotten too far ahead of ourselves, reset the counter
+                if(millis() > nextTime) {
+                    nextTime = millis() + speed;
+                }
+
+                dmxShow();
             }
         }
 
         // Handle fadecandy status messages
         if(buffers.finalizeFrame()) {
-	    streaming_mode = true;
+    	    streaming_mode = true;
 
             if(!dmxWaiting()) {
                 for(int i = 0; i <  LED_COUNT; i++) {
@@ -214,6 +204,7 @@ extern "C" int main()
             }
             else if(button == BUTTON_B) {
                 brightnessStep = (brightnessStep + 1) % BRIGHTNESS_COUNT;
+                nextTime = 0;
                 dmxSetBrightness(brightnessLevels[brightnessStep]);
             }
         }
@@ -222,4 +213,7 @@ extern "C" int main()
 
     // Reboot into DFU bootloader
     dfu_reboot();
+    while (true) {
+        delay(1000);
+    }
 }

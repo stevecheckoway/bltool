@@ -18,6 +18,7 @@ CMD_WRITE_FILE = 0x19
 CMD_NEXT_ANIMATION = 0x80
 
 FILETYPE_ANIMATION = 0x12
+FILETYPE_SCRIPT = 0x80
 
 
 def command(ser, cmd, data=None):
@@ -66,7 +67,8 @@ def read_file(ser, sector):
     data = bytearray()
     offset = 0
     while True:
-        response = command(ser, CMD_READ_FILE, pack('>IIB', sector, offset, 255))
+        response = command(ser, CMD_READ_FILE, pack(
+            '>IIB', sector, offset, 255))
         if response is None:
             return data
         data.extend(response)
@@ -77,9 +79,9 @@ def delete_file(ser, sector):
     return command(ser, CMD_DELETE_FILE, pack('>I', sector)) is not None
 
 
-def new_file(ser, data):
+def new_file(ser, data, file_type):
     sector = command(ser, CMD_NEW_FILE, pack(
-        '>BI', FILETYPE_ANIMATION, len(data)))
+        '>BI', file_type, len(data)))
     if sector is None:
         print("Failed to create file", file=sys.stderr)
         return None
@@ -95,8 +97,10 @@ def new_file(ser, data):
 def reload_animations(ser):
     return command(ser, CMD_RELOAD_ANIMATIONS) is not None
 
+
 def next_animation(ser):
     return command(ser, CMD_NEXT_ANIMATION)
+
 
 def get_serial_port():
     for port in serial.tools.list_ports.grep(r'.*usbmodem.*'):
@@ -126,6 +130,9 @@ def arg_parser():
     add_parser = subparsers.add_parser('add', help='Add file')
     add_parser.add_argument(
         'file', type=argparse.FileType('rb'), help='File to add')
+    script_parser = subparsers.add_parser('add-script', help='Add script file')
+    script_parser.add_argument(
+        'file', type=argparse.FileType('rb'), help='Script file to add')
 
     subparsers.add_parser('reset', help='Reset the blinkytile')
     subparsers.add_parser('next', help='Show the next animation')
@@ -156,12 +163,27 @@ def main():
         elif args.command == 'add':
             data = args.file.read()
             args.file.close()
+            if len(data) == 0:
+                print("File must not be empty", file=sys.stderr)
+                sys.exit(1)
             if len(data) % 256 != 0:
                 print("File must be a multiple of 256 bytes", file=sys.stderr)
                 sys.exit(1)
-            sector = new_file(ser, data)
-            print(f"Created file at sector {sector}")
-            reload_animations(ser)
+            sector = new_file(ser, data, FILETYPE_ANIMATION)
+            print(f"Created file at sector {sector}\nReset to run")
+        elif args.command == 'add-script':
+            data = bytearray(args.file.read())
+            args.file.close()
+            if len(data) == 0:
+                print("File must not be empty", file=sys.stderr)
+                sys.exit(1)
+            if len(data) % 8 != 0:
+                print("File must be a multiple of 8 bytes", file=sys.stderr)
+                sys.exit(1)
+            if len(data) % 256 != 0:
+                data.extend(b'\xff' * (256 - (len(data) % 256)))
+            sector = new_file(ser, data, FILETYPE_SCRIPT)
+            print(f"Created script file at sector {sector}\nReset to run")
         elif args.command == 'reset':
             if not reload_animations(ser):
                 print("Failed to reset", file=sys.stderr)

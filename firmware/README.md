@@ -2,7 +2,7 @@
 
 ## Firmware development
 
-The ARM toolchain 'arm-none-eabi-gcc' is used to compile this project.
+The ARM toolchain 'arm-none-eabi-g++' is used to compile this project.
 
 This can be installed from MacPorts, for example. Build by running `make`.
 

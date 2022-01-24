@@ -8,7 +8,6 @@ from struct import pack
 
 LED_COUNT = 14 * 3
 
-
 class Animation:
     """
     Simple class to hold an animation for BlinkyTiles.

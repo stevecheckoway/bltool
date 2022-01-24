@@ -3,15 +3,16 @@
 ## bltool.py
 
 ```
-usage: bltool.py [-h] {list,delete,add,reset,next} ...
+usage: bltool.py [-h] {list,delete,add,add-script,reset,next} ...
 
 Command the blinkytile.
 
 positional arguments:
-  {list,delete,add,reset,next}
+  {list,delete,add,add-script,reset,next}
     list                List files
     delete              Delete file
     add                 Add file
+    add-script          Add script file
     reset               Reset the blinkytile
     next                Show the next animation
 
@@ -31,6 +32,7 @@ The file at sector 0 has type 18 (animation; the only type defined).
 Subcommands
 - `list` List all of the files on the Lightbuddy
 - `add file` Add the file to the Lightbuddy
+- `add-script file` Add the script file to the Lightbuddy
 - `delete sector` Delete the file starting at `sector` from the Lightbuddy
 - `reset` Reloads the animations and starts playing the first file
 - `next` Run the next animation
@@ -39,10 +41,30 @@ Subcommands
 
 This defines a very simple Animation class which can write out animation files which can be added to the Lightbuddy using `bltool.py add`
 
-## openocd-blinkytile.cfg
+# firmware
 
-This is an OpenOCD configuration file for debugging the Lightbuddy (or
-programming it).
+The firmware in `firmware` is a modified version of the normal BlinkyTile firmware for the Lightbuddy.
+
+Modifications include
+- A new "next animation" command serial command
+- Animation scripts (extremely basic)
+
+## Animation scripts
+
+An animation script is a new file format that lets you control how long each
+regular animation plays. See `script.py` for details and example scripts.
+
+If any animation scripts are in flash, then the "next animation" button (and
+serial command) will move to the next script rather than the next animation.
+
+Since animation scripts refer to animations in order, you'll probably want to
+delete all files and then add normal animations in the order you want and then
+the scripts that will talk to them.
+
+# OpenOCD
+
+`openocd-blinkytile.cfg` is an OpenOCD configuration file for debugging the
+Lightbuddy (or programming it).
 
 ## Reading flash
 

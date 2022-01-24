@@ -42,7 +42,7 @@
 
 // File types
 #define FILETYPE_ANIMATION      0x12
-
+#define FILETYPE_SCRIPT         0x80
 
 // Fadecandy interface defines
 #define LUT_CH_SIZE             257
