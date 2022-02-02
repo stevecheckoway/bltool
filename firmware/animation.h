@@ -96,6 +96,14 @@ public:
     uint32_t getFrameCount() const override;
     uint32_t getSpeed() const override;
     void getFrame(uint32_t frame, uint8_t *buffer) override;
+    void initfade();
+    uint32_t start_randr;
+    uint32_t start_randb;
+    uint32_t start_randg;
+    
+    uint32_t end_randr;
+    uint32_t end_randb;
+    uint32_t end_randg;
 };
 
 class Animations {

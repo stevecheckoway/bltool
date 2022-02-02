@@ -21,33 +21,53 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+#include <cstdlib>
 #include "animation.h"
 #include "blinkytile.h"
+
+
 
 static uint32_t from_be32(uint8_t *b) {
     return (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3];
 }
 
 uint32_t DefaultAnimation::getFrameCount() const {
-    return 12;
+    return 100;
 }
 
 uint32_t DefaultAnimation::getSpeed() const {
     return 100;
 }
 
+void DefaultAnimation::initfade(){
+    start_randr = rand() % 256;
+    start_randb = rand() % 256;
+    start_randg = rand() % 256;
+    
+    end_randr = rand() % 256;
+    end_randb = rand() % 256;
+    end_randg = rand() % 256;
+    
+}
+
 void DefaultAnimation::getFrame(uint32_t frame, uint8_t *buffer) {
+        
+    if (frame == 0){
+        start_randr = end_randr;
+        start_randb = end_randb;
+        start_randg = end_randg;
+        
+        end_randr = rand() % 256;
+        end_randb = rand() % 256;
+        end_randg = rand() % 256;
+
+    }
+    
     for (int i = 0; i < LED_COUNT; ++i) {
-        if (frame == (i % 12)) {
-            buffer[3*i] = 255;
-            buffer[3*i + 1] = 255;
-            buffer[3*i + 2] = 255;
-        }
-        else {
-            buffer[3*i] = 0;
-            buffer[3*i + 1] = 0;
-            buffer[3*i + 2] = 0;
-        }
+        buffer[3*i] = (int)(start_randr*(100 - frame)/100 + end_randr*frame/100);
+        buffer[3*i + 1] = (int)(start_randb*(100 - frame)/100 + end_randb*frame/100);
+        buffer[3*i + 2] = (int)(start_randg*(100 - frame)/100 + end_randg*frame/100);
+        
     }
 }
 
@@ -149,6 +169,8 @@ void Animations::begin(NoFatStorage& storage_) {
         }
     }
 
+    default_animation.initfade();
+    
     initialized = true;
 }
 
@@ -161,10 +183,10 @@ uint32_t Animations::getCount() {
 }
 
 Animation* Animations::getAnimation(uint32_t animation) {
-    if (scriptCount > 0)
-        return &scripts[animation % scriptCount];
-    if (animationCount > 0)
-        return &animations[animation % animationCount];
+    //if (scriptCount > 0)
+    //    return &scripts[animation % scriptCount];
+   // if (animationCount > 0)
+     //   return &animations[animation % animationCount];
     return &default_animation;
 }
 
