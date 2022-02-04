@@ -32,14 +32,33 @@ static uint32_t from_be32(uint8_t *b) {
 }
 
 uint32_t DefaultAnimation::getFrameCount() const {
-    return 100;
+    return 12;
 }
 
 uint32_t DefaultAnimation::getSpeed() const {
     return 100;
 }
 
-void DefaultAnimation::initfade(){
+
+void DefaultAnimation::getFrame(uint32_t frame, uint8_t *buffer) {
+        
+    for (int i = 0; i < LED_COUNT; ++i) {
+        buffer[3*i] = 255;
+        buffer[3*i + 1] = 255;
+        buffer[3*i + 2] = 255;
+        
+    }
+}
+
+uint32_t WholeFadeAnimation::getFrameCount() const {
+    return 100;
+}
+
+uint32_t WholeFadeAnimation::getSpeed() const {
+    return 100;
+}
+
+WholeFadeAnimation::WholeFadeAnimation(){
     start_randr = rand() % 256;
     start_randb = rand() % 256;
     start_randg = rand() % 256;
@@ -50,7 +69,7 @@ void DefaultAnimation::initfade(){
     
 }
 
-void DefaultAnimation::getFrame(uint32_t frame, uint8_t *buffer) {
+void WholeFadeAnimation::getFrame(uint32_t frame, uint8_t *buffer) {
         
     if (frame == 0){
         start_randr = end_randr;
@@ -67,6 +86,65 @@ void DefaultAnimation::getFrame(uint32_t frame, uint8_t *buffer) {
         buffer[3*i] = (int)(start_randr*(100 - frame)/100 + end_randr*frame/100);
         buffer[3*i + 1] = (int)(start_randb*(100 - frame)/100 + end_randb*frame/100);
         buffer[3*i + 2] = (int)(start_randg*(100 - frame)/100 + end_randg*frame/100);
+        
+    }
+}
+
+uint32_t PointChangeAnimation::getFrameCount() const {
+    return (LED_COUNT*2)+2;
+}
+
+uint32_t PointChangeAnimation::getSpeed() const {
+    return 300;
+}
+
+PointChangeAnimation::PointChangeAnimation(){
+    start_randr = rand() % 256;
+    start_randb = rand() % 256;
+    start_randg = rand() % 256;
+    
+    end_randr = rand() % 256;
+    end_randb = rand() % 256;
+    end_randg = rand() % 256;
+        
+    lednum = rand()%LED_COUNT;
+}
+
+void PointChangeAnimation::getFrame(uint32_t frame, uint8_t *buffer) {
+        
+    if (frame == 0){
+        start_randr = end_randr;
+        start_randb = end_randb;
+        start_randg = end_randg;
+        
+        end_randr = rand() % 256;
+        end_randb = rand() % 256;
+        end_randg = rand() % 256;
+        
+        lednum = rand()%LED_COUNT;
+    }
+    
+
+        
+    for (int i = 0; i < LED_COUNT; ++i) {
+
+        uint32_t x = i;
+        
+        x = x + LED_COUNT;
+        
+        if (x < frame){
+            x = 0;
+        } else {
+            x = x - frame;
+        }
+        
+        if (x > LED_COUNT){
+            x = LED_COUNT;
+        }
+        
+        buffer[3*i] = start_randr*x/LED_COUNT + end_randr*(LED_COUNT-x)/LED_COUNT;
+        buffer[3*i + 1] = start_randb*x/LED_COUNT + end_randb*(LED_COUNT-x)/LED_COUNT;
+        buffer[3*i + 2] = start_randg*x/LED_COUNT + end_randg*(LED_COUNT-x)/LED_COUNT;
         
     }
 }
@@ -168,8 +246,6 @@ void Animations::begin(NoFatStorage& storage_) {
             }
         }
     }
-
-    default_animation.initfade();
     
     initialized = true;
 }

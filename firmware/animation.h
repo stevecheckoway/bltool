@@ -96,7 +96,34 @@ public:
     uint32_t getFrameCount() const override;
     uint32_t getSpeed() const override;
     void getFrame(uint32_t frame, uint8_t *buffer) override;
-    void initfade();
+};
+
+class WholeFadeAnimation: public Animation {
+public:
+    WholeFadeAnimation();
+    uint32_t getFrameCount() const override;
+    uint32_t getSpeed() const override;
+    void getFrame(uint32_t frame, uint8_t *buffer) override;
+    
+private:
+        uint32_t start_randr;
+        uint32_t start_randb;
+        uint32_t start_randg;
+    
+        uint32_t end_randr;
+        uint32_t end_randb;
+        uint32_t end_randg;
+    
+};
+
+class PointChangeAnimation: public Animation {
+public:
+    PointChangeAnimation();
+    uint32_t getFrameCount() const override;
+    uint32_t getSpeed() const override;
+    void getFrame(uint32_t frame, uint8_t *buffer) override;
+    
+private:
     uint32_t start_randr;
     uint32_t start_randb;
     uint32_t start_randg;
@@ -104,6 +131,9 @@ public:
     uint32_t end_randr;
     uint32_t end_randb;
     uint32_t end_randg;
+    
+    uint32_t lednum;
+    
 };
 
 class Animations {
@@ -112,7 +142,7 @@ class Animations {
 
     ImageAnimation animations[MAX_ANIMATIONS_COUNT];	// Static table of animations
     ScriptAnimation scripts[MAX_SCRIPTS_COUNT];
-    DefaultAnimation default_animation;
+    PointChangeAnimation default_animation;
     uint32_t animationCount;    // Number of animations in this class
     uint32_t scriptCount;
 
